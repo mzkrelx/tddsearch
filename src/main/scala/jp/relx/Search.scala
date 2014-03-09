@@ -6,12 +6,7 @@ import scalate.ScalateSupport
 class Search extends TddsearchStack {
 
   get("/") {
-    <html>
-      <body>
-        <h1>Hello, world!</h1>
-        Say <a href="hello-scalate">hello to Scalate</a>.
-      </body>
-    </html>
+    html.helloTwirl.render(new java.util.Date)
   }
-  
+
 }

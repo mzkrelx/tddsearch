@@ -1,0 +1,20 @@
+@(date: java.util.Date)
+
+<html>
+  <body>
+    <h1>Twirl reporting for duty at @date.toString!</h1>
+
+    <p>
+      @partial(
+        List(
+          "This is a call to a \"partial\" template.",
+          "It's no different than a call to a top-level template."
+        )
+      )
+    </p>
+
+    <p>
+      @funny()
+    </p>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+seq(Twirl.settings: _*)
