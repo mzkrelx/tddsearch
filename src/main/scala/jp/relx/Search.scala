@@ -6,7 +6,7 @@ import scalate.ScalateSupport
 class Search extends TddsearchStack {
 
   get("/") {
-    html.helloTwirl.render(new java.util.Date)
+    html.helloTwirl.render("クエリ", 1000, 10)
   }
 
 }
