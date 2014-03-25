@@ -15,11 +15,11 @@ object Restaurant {
 
   val typeName = "restaurant"
 
-  def search(query: String) = {
-    val json = s"""{
+  val seachRequestJson = s"""
+    {
       "query": {
         "multi_match": {
-          "query": "$query",
+          "query": "%s",
           "fields": [
             "name^10",
             "address",
@@ -43,7 +43,7 @@ object Restaurant {
       },
       "suggest": {
         "name_suggest": {
-          "text": "$query",
+          "text": "%s",
           "term": {
             "field": "name",
             "size": 3
@@ -52,11 +52,29 @@ object Restaurant {
       },
       "fields": ["id"],
       "size": 100
-    }"""
+    }
+  """
+
+// setSource できないっぽいから使えない?
+  val completionRequestJson = s"""
+    {
+      "suggest": {
+        "name_completion": {
+          "text": "%s",
+          "completion": {
+            "field": "name"
+          }
+        }
+      },
+      "size": 5
+    }
+  """
+
+  def search(query: String): SearchResult = {
 
     val response = ElasticSearch.client.prepareSearch()
       .setTypes(typeName)
-      .setSource(json)
+      .setSource(seachRequestJson.format(query, query))
       .execute()
       .actionGet()
 
@@ -65,10 +83,12 @@ object Restaurant {
         s.getName(),
         s.getEntries() map { e =>
           SuggestEntry(
-              e.getText().toString,
-              e.getLength(),
-              e.getOffset(),
-              e.getOptions().toList map { o => SuggestOption(o.getText().toString, o.getScore()) }
+            e.getText().toString,
+            e.getLength(),
+            e.getOffset(),
+            e.getOptions().toList map { o =>
+              SuggestOption(o.getText().toString, o.getScore())
+            }
           )
         }
       )
@@ -85,6 +105,44 @@ object Restaurant {
       suggests,
       response
     )
+  }
+
+  def completion(query: String): Seq[String] = {
+//    val response = ElasticSearch.client.prepareSearch()
+//      .setTypes(typeName)
+//      .setSource(completionRequestJson.format(query))
+//      .execute()
+//      .actionGet()
+    val response = ElasticSearch.client.prepareSuggest("livedoor-gourmet")
+        .addSuggestion(
+          new CompletionSuggestionBuilder("name_completion")
+            .field("name.completion")
+            .text(query)
+            .size(10)
+        ).execute().actionGet()
+//    println(response)
+
+    val suggestEntriesList = response.getSuggest().iterator().toList map { s =>
+      SuggestEntries(
+        s.getName(),
+        s.getEntries() map { e =>
+          SuggestEntry(
+            e.getText().toString,
+            e.getLength(),
+            e.getOffset(),
+            e.getOptions().toList map { o =>
+              SuggestOption(o.getText().toString, o.getScore())
+            }
+          )
+        }
+      )
+    }
+    val nameCompletionOption: Option[Seq[SuggestEntry]] = suggestEntriesList.find{ _.name == "name_completion" }.map { _.entries }
+    val suggestsOption: Option[Seq[String]] = nameCompletionOption.map { _.map{_.options}.flatten.map(_.text) }
+    suggestsOption match {
+      case None => Nil
+      case Some(seq) => seq
+    }
   }
 }
 

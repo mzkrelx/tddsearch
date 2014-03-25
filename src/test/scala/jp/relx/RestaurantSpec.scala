@@ -93,11 +93,11 @@ class RestaurantSpec extends Specification with BeforeExample {
        Restaurant.search("ラメーン").suggests.head must equalTo ("ラーメン")
     }
   }
-//
-//  "completion" shoule {
-//    "ラー > ラーメン" in {
-////      Restaurant.completion("ラー")[0]['text']).to include('ラーメン')
-//    }
-//  }
+
+  "completion" should {
+    "ラー > ラーメン" in {
+      Restaurant.completion("ラー") must contain ("ラーメン")
+    }
+  }
 
 }
